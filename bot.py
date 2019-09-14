@@ -8,7 +8,15 @@ from datetime import datetime, date
 import logging
 import settings
 import ephem
-
+'''
+* Установите модуль ephem
+* Добавьте в бота команду /planet, которая будет принимать на вход 
+  название планеты на английском, например /planet Mars
+* В функции-обработчике команды из update.message.text получите 
+  название планеты (подсказка: используйте .split())
+* При помощи условного оператора if и ephem.constellation научите 
+  бота отвечать, в каком созвездии сегодня находится планета.
+'''
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO,
                     filename='bot.log'
@@ -19,6 +27,20 @@ location_button = KeyboardButton('Location', request_location=True)
 
 my_keyboard = ReplyKeyboardMarkup([['See cat!','moon'],['111','222'],[contact_button, location_button]])
 now=datetime.now()
+
+def planets(bot, update, user_data):
+    try:
+        user_text = update.message.text.split(' ')[1].capitalize()
+        planet=getattr(ephem, user_text)
+        Planet=planet()
+        Planet.compute()
+        constel=ephem.constellation(Planet)
+        text='Созвездие {}'.format(constel)
+    except:
+        text='Нет такой планеты'
+    finally:
+        update.message.reply_text(text)
+
 def get_contact(bot, update, user_data):
     print(update.message.contact)
     update.message.reply_text('Thanks {}'.format(get_contact(user_data)))
@@ -70,6 +92,7 @@ def main():
     dp.add_handler(CommandHandler("start", greet_user, pass_user_data=True))
     dp.add_handler(CommandHandler("cat", send_cat_picture, pass_user_data=True))
     dp.add_handler(CommandHandler("wordcount", wordcount, pass_user_data=True))
+    dp.add_handler(CommandHandler("planet", planets, pass_user_data=True))
 
     dp.add_handler(RegexHandler('^(See cat!)$', send_cat_picture, pass_user_data=True))
     dp.add_handler(RegexHandler('^(moon)$', full_moon, pass_user_data=True))
