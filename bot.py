@@ -1,32 +1,57 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, Filters
 from glob import glob
+from datetime import datetime, date
 from random import choice
 from emoji import emojize
+
 from telegram import ReplyKeyboardMarkup, KeyboardButton
  
-from datetime import datetime, date
 import logging
 import settings
 import ephem
-'''
-* Установите модуль ephem
-* Добавьте в бота команду /planet, которая будет принимать на вход 
-  название планеты на английском, например /planet Mars
-* В функции-обработчике команды из update.message.text получите 
-  название планеты (подсказка: используйте .split())
-* При помощи условного оператора if и ephem.constellation научите 
-  бота отвечать, в каком созвездии сегодня находится планета.
-'''
+
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO,
                     filename='bot.log'
                     )
 
-contact_button = KeyboardButton('Contact info', request_contact=True)
-location_button = KeyboardButton('Location', request_location=True)
 
-my_keyboard = ReplyKeyboardMarkup([['See cat!','moon'],['111','222'],[contact_button, location_button]])
-now=datetime.now()
+def get_contact(bot, update, user_data):
+    print(update.message.contact)
+    update.message.reply_text('Спасибо! {}'.format(get_contact(user_data)), reply_markup=get_keyboard())
+
+def get_location(bot, update, user_data):
+    print(update.message.location)
+    update.message.reply_text('Спасибо! {}'.format(get_location(user_data)), reply_markup=get_keyboard())
+
+def wordcount(bot, update, user_data):
+    user_text = update.message.text
+    if len(user_text) > 1:
+        text='Всего {} слов.'.format(len(user_text.split(' '))-1)
+    else:
+        text='Напишите текст и я скажу сколько в нём слов'    
+    update.message.reply_text(text)
+
+def greet_user(bot, update, user_data):
+    emo = get_user_emo(user_data)
+    user_data['emo'] = emo #присваивание рандомного смайлика
+    text = 'Hello {}'.format(emo)
+    update.message.reply_text(user_text, reply_markup=get_keyboard)
+
+def talk_to_me(bot, update, user_data):
+    emo = get_user_emo(user_data)
+    user_text = 'Привет {}! Ты написал: {}'.format(update.message.chat.first_name, emo, 
+                update.message.text)
+    logging.info('User: %s, Chat id: %s, Message: %s', 
+                update.message.chat.username, update.message.chat.id, update.message.text)
+    update.message.reply_text(user_text, reply_markup=get_keyboard())
+
+def full_moon(bot,update,user_data):
+    now=datetime.now()
+    user_text = update.message.text
+    d='{}/{}/{}'.format(now.year,now.month,now.day)
+    text = 'Следующее полнолуние: {}'.format(ephem.next_full_moon(d))
+    update.message.reply_text(text)
 
 def planets(bot, update, user_data):
     try:
@@ -34,74 +59,63 @@ def planets(bot, update, user_data):
         planet=getattr(ephem, user_text)
         Planet=planet()
         Planet.compute()
-        constel=ephem.constellation(Planet)
-        text='Созвездие {}'.format(constel)
+        constellation=ephem.constellation(Planet)
+        text='Созвездие {}'.format(constellation)
     except:
         text='Нет такой планеты'
     finally:
         update.message.reply_text(text)
 
-def get_contact(bot, update, user_data):
-    print(update.message.contact)
-    update.message.reply_text('Thanks {}'.format(get_contact(user_data)))
-
-def get_location(bot, update, user_data):
-    print(update.message.location)
-    update.message.reply_text('Thanks {}'.format(get_location(user_data)))
-
-def wordcount(bot, update, user_data):
-    user_text = update.message.text
-    if len(user_text) > 1:
-        text='Len: {}'.format(len(user_text.split(' '))-1)
-    else:
-        text='Input some text and i will tell you how many words in it'    
-    update.message.reply_text(text)
-
-def full_moon(bot,update,user_data):
-    user_text = update.message.text
-    d='{}/{}/{}'.format(now.year,now.month,now.day)
-    text = 'Next full MOON: {}'.format(ephem.next_full_moon(d))
-    update.message.reply_text(text)
-
 def get_user_emo(user_data):
-    smile = emojize(choice(settings.USER_EMOJI),use_aliases=True)
-    return smile
-
-def greet_user(bot, update, user_data):
-    emo = get_user_emo(user_data)
-    user_data['emo'] = emo
-    text = 'Hello {}'.format(emo)
-    #my_keyboard = ReplyKeyboardMarkup([['/cat']])
-    update.message.reply_text(text, reply_markup=my_keyboard)   
-
-def talk_to_me(bot, update, user_data):
-    user_text = update.message.text 
-    print(user_text)
-    update.message.reply_text(user_text)
+    if 'emo' in user_data:
+        return user_data['emo']
+    else:
+        user_data['emo'] = emojize(choice(settings.USER_EMOJI),use_aliases=True)
+        return user_data['emo']
 
 def send_cat_picture(bot, update, user_data):
     cat_list = glob("images/cat*.jp*g")
     cat_pic = choice(cat_list)
-    bot.send_photo(chat_id=update.message.chat.id, photo=open(cat_pic, "rb"))
+    bot.send_photo(chat_id=update.message.chat.id, photo=open(cat_pic, "rb"), reply_markup=get_keyboard())
+
+def change_avatar(bot,update,user_data):
+    if 'emo' in user_data:
+        del user_data['emo']
+    emo = get_user_emo(user_data)
+    update.message.reply_text('Готово: {}'.format(emo), reply_markup=get_keyboard())
+
+def get_keyboard():
+    contact_button = KeyboardButton('Прислать контакты', request_contact=True)
+    location_button = KeyboardButton('Прислать координаты', request_location=True)
+    my_keyboard = ReplyKeyboardMarkup([
+                                        ['Прислать котика','Сменить аватарку'],
+                                        [contact_button,location_button]
+                                        ], resize_keyboard=True
+                                        )
+    return my_keyboard
 
 def main():
     mybot = Updater(settings.API_KEY)
+    logging.info('БОТ ЗАПУСКАЕТСЯ')
 
     dp = mybot.dispatcher
         
-    dp.add_handler(CommandHandler("start", greet_user, pass_user_data=True))
+    dp.add_handler(CommandHandler("start", greet_user, pass_user_data=True)) # обрабатывает команду start
     dp.add_handler(CommandHandler("cat", send_cat_picture, pass_user_data=True))
     dp.add_handler(CommandHandler("wordcount", wordcount, pass_user_data=True))
     dp.add_handler(CommandHandler("planet", planets, pass_user_data=True))
 
-    dp.add_handler(RegexHandler('^(See cat!)$', send_cat_picture, pass_user_data=True))
+    dp.add_handler(RegexHandler('^(Прислать котика)$', send_cat_picture, pass_user_data=True))
+    dp.add_handler(RegexHandler('^(Сменить аватарку)$', change_avatar, pass_user_data=True))
     dp.add_handler(RegexHandler('^(moon)$', full_moon, pass_user_data=True))
 
     dp.add_handler(MessageHandler(Filters.contact, get_contact, pass_user_data=True))
     dp.add_handler(MessageHandler(Filters.location, get_location, pass_user_data=True))
-    dp.add_handler(MessageHandler(Filters.text, talk_to_me, pass_user_data=True))
+    
+    dp.add_handler(MessageHandler(Filters.text, talk_to_me, pass_user_data=True)) # обрабатывает любые текстовые сообщения
     
     mybot.start_polling()
     mybot.idle()
  
-main()
+if __name__=="__main__":
+    main()
