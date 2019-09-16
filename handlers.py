@@ -1,6 +1,6 @@
-from utils import get_keyboard, get_contact, get_location, get_user_emo
-from astronomy import *
-from bot import *
+from utils import get_user_emo, get_keyboard
+from glob import glob
+from random import choice
 
 def greet_user(bot, update, user_data):
     emo = get_user_emo(user_data)

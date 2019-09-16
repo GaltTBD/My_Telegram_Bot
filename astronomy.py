@@ -1,18 +1,5 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, Filters
-from glob import glob
 from datetime import datetime, date
-from random import choice
-from emoji import emojize
-
-from telegram import ReplyKeyboardMarkup, KeyboardButton
- 
-import logging
-import settings
 import ephem
-
-from utils import *
-from handlers import *
-from bot import *
 
 def full_moon(bot,update,user_data):
     now=datetime.now()

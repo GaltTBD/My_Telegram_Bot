@@ -1,18 +1,18 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, Filters
-from glob import glob
-from datetime import datetime, date
-from random import choice
-from emoji import emojize
+from glob import glob #handlers
+from datetime import datetime, date #astranomy
+from random import choice #handlers utils
+from emoji import emojize #utils
 
-from telegram import ReplyKeyboardMarkup, KeyboardButton
+from telegram import ReplyKeyboardMarkup, KeyboardButton #utils
  
 import logging
-import settings
-import ephem
+import settings #utils
+import ephem #astranomy
 
-from utils import *
-from handlers import *
-from astronomy import *
+from utils import get_keyboard, get_user_emo, wordcount
+from handlers import get_contact, get_location, greet_user, talk_to_me, send_cat_picture, change_avatar
+from astronomy import full_moon, planets_constellation
 
 
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
