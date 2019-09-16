@@ -1,11 +1,3 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, Filters
-from glob import glob
-from datetime import datetime, date
-from random import choice
-from emoji import emojize
-
-from telegram import ReplyKeyboardMarkup, KeyboardButton
- 
 from handlers import *
 from astronomy import *
 from bot import *
