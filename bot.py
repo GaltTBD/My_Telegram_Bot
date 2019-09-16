@@ -1,14 +1,14 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, Filters
-from glob import glob #handlers
-from datetime import datetime, date #astranomy
-from random import choice #handlers utils
-from emoji import emojize #utils
+#from glob import glob #handlers
+#from datetime import datetime, date #astranomy
+#from random import choice #handlers utils
+#from emoji import emojize #utils
 
-from telegram import ReplyKeyboardMarkup, KeyboardButton #utils
- 
+#from telegram import ReplyKeyboardMarkup, KeyboardButton #utils
+#import ephem #astranomy 
 import logging
 import settings #utils
-import ephem #astranomy
+
 
 from utils import get_keyboard, get_user_emo, wordcount
 from handlers import get_contact, get_location, greet_user, talk_to_me, send_cat_picture, change_avatar

@@ -22,8 +22,17 @@ def get_keyboard():
 
 def wordcount(bot, update, user_data):
     user_text = update.message.text
-    if len(user_text) > 1:
-        text='Всего {} слов.'.format(len(user_text.split(' '))-1)
-    else:
-        text='Напишите текст и я скажу сколько в нём слов'    
+    try:
+        words=len(user_text.split())-1
+        if words%10 == 1:
+            wd='слово'
+        elif words%10 > 1 and words%10 < 5:
+            wd='слова'
+        elif words%10 >= 0:
+            wd='слов'
+        text='В тексте всего {} {}.'.format(words,wd)
+    except:
+        text='Напишите текст и я скажу сколько в нём слов'
     update.message.reply_text(text)
+
+
