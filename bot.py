@@ -1,43 +1,52 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, Filters
-#from glob import glob #handlers
-#from datetime import datetime, date #astranomy
-#from random import choice #handlers utils
-#from emoji import emojize #utils
+from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, ConversationHandler, Filters
 
-#from telegram import ReplyKeyboardMarkup, KeyboardButton #utils
-#import ephem #astranomy 
 import logging
-import settings #utils
-
+import settings
 
 from utils import get_keyboard, get_user_emo, wordcount
-from handlers import get_contact, get_location, greet_user, talk_to_me, send_cat_picture, change_avatar
+from handlers import * #get_contact, get_location, greet_user, talk_to_me, send_cat_picture, change_avatar, check_user_photo, anketa_start, anketa_get_name
 from astronomy import full_moon, planets_constellation
+#from cities import import_csv
 
 
-logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                     level=logging.INFO,
                     filename='bot.log'
                     )
 
 def main():
     mybot = Updater(settings.API_KEY)
+    
     logging.info('БОТ ЗАПУСКАЕТСЯ')
 
     dp = mybot.dispatcher
-        
+
+    anketa = ConversationHandler(
+        entry_points = [RegexHandler('^(Заполнить анкету)$', anketa_start, pass_user_data=True)],#с чего стартует
+        states = {
+            "name": [MessageHandler(Filters.text, anketa_get_name, pass_user_data=True)],
+            "rating": [RegexHandler('^(1|2|3|4|5)$', anketa_rating, pass_user_data=True)],
+            "comment": [MessageHandler(Filters.text, anketa_comment, pass_user_data=True),
+                        CommandHandler('skip', anketa_skip_comment, pass_user_data=True)]
+        },
+        fallbacks = [MessageHandler(Filters.text, dontknow, pass_user_data=True)]
+    )
+
     dp.add_handler(CommandHandler("start", greet_user, pass_user_data=True)) # обрабатывает команду start
+    dp.add_handler(anketa)
     dp.add_handler(CommandHandler("cat", send_cat_picture, pass_user_data=True))
     dp.add_handler(CommandHandler("wordcount", wordcount, pass_user_data=True))
     dp.add_handler(CommandHandler("planet", planets_constellation, pass_user_data=True))
-
+#    dp.add_handler(CommandHandler("cities", import_csv, pass_user_data=True))
+    
     dp.add_handler(RegexHandler('^(Прислать котика)$', send_cat_picture, pass_user_data=True))
     dp.add_handler(RegexHandler('^(Сменить аватарку)$', change_avatar, pass_user_data=True))
     dp.add_handler(RegexHandler('^(moon)$', full_moon, pass_user_data=True))
-
+    
     dp.add_handler(MessageHandler(Filters.contact, get_contact, pass_user_data=True))
     dp.add_handler(MessageHandler(Filters.location, get_location, pass_user_data=True))
-    
+    dp.add_handler(MessageHandler(Filters.photo, check_user_photo, pass_user_data=True))
+
     dp.add_handler(MessageHandler(Filters.text, talk_to_me, pass_user_data=True)) # обрабатывает любые текстовые сообщения
     
     mybot.start_polling()

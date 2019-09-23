@@ -2,3 +2,5 @@ settings.py
 *.log
 env/
 __pycache__/
+city.csv
+downloads/
