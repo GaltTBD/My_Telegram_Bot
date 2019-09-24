@@ -5,10 +5,13 @@ from random import choice
 
 from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode
 from telegram.ext import ConversationHandler
-
+from telegram.ext import messagequeue as mq
 from utils import get_user_emo, get_keyboard, is_cat
 
+from bot import subscribers
+
 def greet_user(bot, update, user_data):
+    print(update.message.chat_id)
     emo = get_user_emo(user_data)
     user_data['emo'] = emo #присваивание рандомного смайлика
     text = 'Hello {}'.format(emo)
@@ -103,3 +106,33 @@ def anketa_skip_comment(bot, update, user_data):
 
 def dontknow(bot, update, user_data):
     update.message.reply_text('Не понимаю')
+
+def subscribe(bot, update):
+    subscribers.add(update.message.chat_id)
+    update.message.reply_text('Вы подписались!')
+    print(subscribers)
+
+
+def unsubscribe(bot, update):
+    if update.message.chat_id in subscribers:
+        subscribers.remove(update.message.chat_id)
+        update.message.reply_text('Вы отписались!')
+    else:
+        update.message.reply_text('Вы не подписаны')
+
+@mq.queuedmessage
+def send_updates(bot, job):
+    for chat_id in subscribers:
+        bot.sendMessage(chat_id=chat_id, text='fuuuu!')
+
+def set_alarm(bot,update,args, job_queue):
+    try:
+        seconds = abs(int(args[0]))
+        job_queue.run_once(alarm, seconds, context=update.message.chat_id)
+    except (IndexError, ValueError):
+        update.message.reply_text('Ввведите колчисетво секундр после /alarm')
+
+@mq.queuedmessage
+def alarm(bot, job):
+    bot.send_message(chat_id=job.context, text='Сработал будильник!')
+
