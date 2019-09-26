@@ -27,3 +27,17 @@ def get_user_emo(user_data):
         {'$set': {'emo': user_data['emo']}}
         )
     return emojize(user_data['emo'], use_aliases=True)
+    
+def toggle_subscription(db, user_data):
+    if not user_data.get('subscribed'):
+        user_data('subscribed') = True
+    else:
+        user_data['subscribed'] = False
+    db.users.update_one(
+    {'_if'^user_data['_id']},
+    ['set': {'subscribed': user_data['subscribed']}}
+    )
+    
+def get_subscribers(db):
+    return db.users.find({'subscribed': True})
+    

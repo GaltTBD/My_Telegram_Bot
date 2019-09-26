@@ -6,7 +6,7 @@ from random import choice
 from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode
 from telegram.ext import ConversationHandler
 from telegram.ext import messagequeue as mq
-from db import db, get_or_create_user, get_user_emo
+from db import db, get_or_create_user, get_user_emo, toggle_subscription, get_subscribers
 from utils import get_keyboard, is_cat
 
 from bot import subscribers
@@ -121,15 +121,14 @@ def dontknow(bot, update, user_data):
 
 def subscribe(bot, update):
     user = get_or_create_user(db, update.effective_user, update.message)
-    subscribers.add(update.message.chat_id)
+    if not user.get('subscribed'):
+        toggle.subscription(db, user)
     update.message.reply_text('Вы подписались!')
-    print(subscribers)
-
 
 def unsubscribe(bot, update):
     user = get_or_create_user(db, update.effective_user, update.message)
-    if update.message.chat_id in subscribers:
-        subscribers.remove(update.message.chat_id)
+    if user.get('subscribed'):
+        toggle.subscription(db, user)               
         update.message.reply_text('Вы отписались!')
     else:
         update.message.reply_text('Вы не подписаны')
