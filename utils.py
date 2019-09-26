@@ -1,25 +1,18 @@
-
+from clarifai.rest import ClarifaiApp
 from telegram import ReplyKeyboardMarkup, KeyboardButton
 
-
-from clarifai.rest import ClarifaiApp
-
 import settings
-
-
-
 
 def get_keyboard():
     contact_button = KeyboardButton('Прислать контакты', request_contact=True)
     location_button = KeyboardButton('Прислать координаты', request_location=True)
     my_keyboard = ReplyKeyboardMarkup([
-                                        ['Прислать котика','Сменить аватарку'],
-                                        [contact_button,location_button],
-                                        ['Заполнить анкету']
-                                        ], resize_keyboard=True
-                                        )
+        ['Прислать котика','Сменить аватарку'],
+        [contact_button,location_button],
+        ['Заполнить анкету']
+        ], resize_keyboard=True
+        )
     return my_keyboard
-
 
 def wordcount(bot, update, user_data):
     user_text = update.message.text

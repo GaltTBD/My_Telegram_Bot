@@ -3,7 +3,10 @@ import logging
 import os
 from random import choice
 
-from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode
+from emoji import emojize
+
+from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode,\
+     InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler
 from telegram.ext import messagequeue as mq
 from db import db, get_or_create_user, get_user_emo, toggle_subscription, get_subscribers
@@ -32,8 +35,10 @@ def send_cat_picture(bot, update, user_data):
     user = get_or_create_user(db, update.effective_user, update.message)
     cat_list = glob("images/cat*.jp*g")
     cat_pic = choice(cat_list)
-    bot.send_photo(chat_id=update.message.chat.id, photo=open(cat_pic, "rb"), reply_markup=get_keyboard())
-
+    inlinekbd = [[InlineKeyboardButton(emojize(":thumbs_up:"), callback_data='cat_good'),
+                    InlineKeyboardButton(emojize(":thumbs_down:"), callback_data='cat_bad')]]
+    kbd_markup = InlineKeyboardMarkup(inlinekbd)
+    bot.send_photo(chat_id=update.message.chat.id, photo=open(cat_pic, "rb"), reply_markup=kbd_markup)
 
 def change_avatar(bot,update,user_data):
     user = get_or_create_user(db, update.effective_user, update.message)
@@ -53,7 +58,6 @@ def get_location(bot, update, user_data):
     user = get_or_create_user(db, update.effective_user, update.message)
     print(update.message.location)
     update.message.reply_text('Спасибо! {}'.format(get_user_emo(db, user)), reply_markup=get_keyboard())
-
 
 def check_user_photo(bot, update, user_data):
     user = get_or_create_user(db, update.effective_user, update.message)
@@ -125,6 +129,16 @@ def subscribe(bot, update):
     if not user.get('subscribed'):
         toggle_subscription(db, user)
     update.message.reply_text('Вы подписались!')
+
+def inline_button_processed(bot, update):
+    query = update.callback_query
+    try:
+        user_choice = int(query.data)
+        text = ':-)' if user_choice > 0 else ':-('
+    except TypeError:
+        text = 'Что то пошло не так'
+    bot.edit_message_text(text=text, chat_id=query.message.chat.id, message_id = query.message.message_id)
+
 
 def unsubscribe(bot, update):
     user = get_or_create_user(db, update.effective_user, update.message)
