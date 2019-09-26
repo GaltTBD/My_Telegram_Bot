@@ -6,13 +6,14 @@ from random import choice
 from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode
 from telegram.ext import ConversationHandler
 from telegram.ext import messagequeue as mq
-from utils import get_user_emo, get_keyboard, is_cat
+from db import db, get_or_create_user, get_user_emo
+from utils import get_keyboard, is_cat
 
 from bot import subscribers
 
 def greet_user(bot, update, user_data):
-    print(update.message.chat_id)
-    emo = get_user_emo(user_data)
+    user_data = get_or_create_user(db, update.effectivve_user, update.message)
+    emo = get_user_emo(db, user)
     user_data['emo'] = emo #присваивание рандомного смайлика
     text = 'Hello {}'.format(emo)
     update.message.reply_text(user_text, reply_markup=get_keyboard)
@@ -20,38 +21,42 @@ def greet_user(bot, update, user_data):
 
 def talk_to_me(bot, update, user_data):
     emo = get_user_emo(user_data)
-    user_text = 'Привет {} {}! Ты написал: {}'.format(update.message.chat.first_name, emo, 
-                                                        update.message.text)
-    logging.info('User: %s, Chat id: %s, Message: %s', update.message.chat.username, 
+    user_text = 'Привет {} {}! Ты написал: {}'.format(user['first_name'], emo,                                        update.message.text)
+    logging.info('User: %s, Chat id: %s, Message: %s', user['username'], 
                 update.message.chat.id, update.message.text)
-    update.message.reply_text(user_text, reply_markup=get_keyboard())
+                                                    update.message.reply_text(user_text, reply_markup=get_keyboard())
 
 
 def send_cat_picture(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
     cat_list = glob("images/cat*.jp*g")
     cat_pic = choice(cat_list)
     bot.send_photo(chat_id=update.message.chat.id, photo=open(cat_pic, "rb"), reply_markup=get_keyboard())
 
 
 def change_avatar(bot,update,user_data):
-    if 'emo' in user_data:
-        del user_data['emo']
-    emo = get_user_emo(user_data)
+    user = get_or_create_user(db, update.effective_user, update.message)
+    if 'emo' in user:
+        del user['emo']
+    emo = get_user_emo(db, user)
     update.message.reply_text('Готово: {}'.format(emo), reply_markup=get_keyboard())
 
 
 def get_contact(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
     print(update.message.contact)
-    update.message.reply_text('Спасибо! {}'.format(get_contact(user_data)), reply_markup=get_keyboard())
+    update.message.reply_text('Спасибо! {}'.format(get_user_emo(db, user)), reply_markup=get_keyboard())
 
 
 def get_location(bot, update, user_data):
+user = get_or_create_user(db, update.effective_user, update.message)
     print(update.message.location)
-    update.message.reply_text('Спасибо! {}'.format(get_location(user_data)), reply_markup=get_keyboard())
+    update.message.reply_text('Спасибо! {}'.format(get_user_emo(db, user)), reply_markup=get_keyboard())
 
 
 def check_user_photo(bot, update, user_data):
-    update.message.reply_text('Обрабатываю фото')
+user = get_or_create_user(db, update.effective_user, update.message)
+update.message.reply_text('Обрабатываю фото')
     os.makedirs('downloads', exist_ok=True)
     photo_file = bot.getFile(update.message.photo[-1].file_id)
     filename = os.path.join('downloads', '{}.jpg'.format(photo_file.file_id))
@@ -65,10 +70,13 @@ def check_user_photo(bot, update, user_data):
         update.message.reply_text('Тревога! Котик не обнаружен!!!')
 
 def anketa_start(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
     update.message.reply_text('Как вас зовут? Напишите имя и фамилию', reply_markup = ReplyKeyboardRemove())
     return "name"
 
 def anketa_get_name(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
+    user = get_or_create_user(db, update.effective_user, update.message)
     user_name = update.message.text
     if len(user_name.split(" ")) != 2:
         update.message.reply_text("Пожалуйста введите имя и фамилию")
@@ -83,12 +91,14 @@ def anketa_get_name(bot, update, user_data):
         return "rating"
 
 def anketa_rating(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
     user_data['anketa_rating'] = update.message.text
     update.message.reply_text(""""Пожалуйста напишите отзыв в свободной форме 
 или /skip чтобы пропустить этот шаг""")
     return "comment"
 
 def anketa_comment(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
     user_data['anketa_comment'] = update.message.text
     text = """
 <b>Фамилия Имя:</b> {anketa_name}
@@ -98,6 +108,7 @@ def anketa_comment(bot, update, user_data):
     return ConversationHandler.END
 
 def anketa_skip_comment(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
     text = """
 <b>Фамилия Имя:</b> {anketa_name}
 <b>Оценка:</b> {anketa_rating}""".format(**user_data)
@@ -105,15 +116,18 @@ def anketa_skip_comment(bot, update, user_data):
     return ConversationHandler.END
 
 def dontknow(bot, update, user_data):
+    user = get_or_create_user(db, update.effective_user, update.message)
     update.message.reply_text('Не понимаю')
 
 def subscribe(bot, update):
+    user = get_or_create_user(db, update.effective_user, update.message)
     subscribers.add(update.message.chat_id)
     update.message.reply_text('Вы подписались!')
     print(subscribers)
 
 
 def unsubscribe(bot, update):
+    user = get_or_create_user(db, update.effective_user, update.message)
     if update.message.chat_id in subscribers:
         subscribers.remove(update.message.chat_id)
         update.message.reply_text('Вы отписались!')

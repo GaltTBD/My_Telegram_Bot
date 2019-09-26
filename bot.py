@@ -1,6 +1,8 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, RegexHandler, ConversationHandler, Filters
 from telegram.ext import messagequeue as mq
 
+from db import get_or_create_user, get_user_emo
+
 import logging
 import settings
 
