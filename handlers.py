@@ -21,10 +21,11 @@ def greet_user(bot, update, user_data):
 
 def talk_to_me(bot, update, user_data):
     emo = get_user_emo(user_data)
-    user_text = 'Привет {} {}! Ты написал: {}'.format(user['first_name'], emo,                                        update.message.text)
+    user_text = 'Привет {} {}! Ты написал: {}'.format(user['first_name'], emo, 
+                                                        update.message.text)
     logging.info('User: %s, Chat id: %s, Message: %s', user['username'], 
                 update.message.chat.id, update.message.text)
-                                                    update.message.reply_text(user_text, reply_markup=get_keyboard())
+    update.message.reply_text(user_text, reply_markup=get_keyboard())
 
 
 def send_cat_picture(bot, update, user_data):
@@ -49,14 +50,14 @@ def get_contact(bot, update, user_data):
 
 
 def get_location(bot, update, user_data):
-user = get_or_create_user(db, update.effective_user, update.message)
+    user = get_or_create_user(db, update.effective_user, update.message)
     print(update.message.location)
     update.message.reply_text('Спасибо! {}'.format(get_user_emo(db, user)), reply_markup=get_keyboard())
 
 
 def check_user_photo(bot, update, user_data):
-user = get_or_create_user(db, update.effective_user, update.message)
-update.message.reply_text('Обрабатываю фото')
+    user = get_or_create_user(db, update.effective_user, update.message)
+    update.message.reply_text('Обрабатываю фото')
     os.makedirs('downloads', exist_ok=True)
     photo_file = bot.getFile(update.message.photo[-1].file_id)
     filename = os.path.join('downloads', '{}.jpg'.format(photo_file.file_id))
@@ -122,21 +123,21 @@ def dontknow(bot, update, user_data):
 def subscribe(bot, update):
     user = get_or_create_user(db, update.effective_user, update.message)
     if not user.get('subscribed'):
-        toggle.subscription(db, user)
+        toggle_subscription(db, user)
     update.message.reply_text('Вы подписались!')
 
 def unsubscribe(bot, update):
     user = get_or_create_user(db, update.effective_user, update.message)
     if user.get('subscribed'):
-        toggle.subscription(db, user)               
+        toggle_subscription(db, user)               
         update.message.reply_text('Вы отписались!')
     else:
         update.message.reply_text('Вы не подписаны')
 
 @mq.queuedmessage
 def send_updates(bot, job):
-    for chat_id in subscribers:
-        bot.sendMessage(chat_id=chat_id, text='fuuuu!')
+    for user in get_subscribers(db):
+        bot.sendMessage(chat_id=user['chat_id'], text='fuuuu!')
 
 def set_alarm(bot,update,args, job_queue):
     try:

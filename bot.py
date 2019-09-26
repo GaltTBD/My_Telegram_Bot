@@ -6,7 +6,7 @@ from db import get_or_create_user, get_user_emo
 import logging
 import settings
 
-from utils import get_keyboard, get_user_emo, wordcount
+from utils import get_keyboard, wordcount
 from handlers import * #get_contact, get_location, greet_user, talk_to_me, send_cat_picture, change_avatar, check_user_photo, anketa_start, anketa_get_name
 from astronomy import full_moon, planets_constellation
 #from cities import import_csv
