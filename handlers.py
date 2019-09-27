@@ -132,13 +132,9 @@ def subscribe(bot, update):
 
 def inline_button_processed(bot, update):
     query = update.callback_query
-    try:
-        user_choice = int(query.data)
-        text = ':-)' if user_choice > 0 else ':-('
-    except TypeError:
-        text = 'Что то пошло не так'
-    bot.edit_message_text(text=text, chat_id=query.message.chat.id, message_id = query.message.message_id)
-
+    if query.data in ['cat_good', 'cat_bad']:
+        text = 'Круто' if query.data == 'cat_good' else 'Печаль :-('
+        bot.edit_message_caption(caption=text, chat_id=query.message.chat.id, message_id = query.message.message_id)
 
 def unsubscribe(bot, update):
     user = get_or_create_user(db, update.effective_user, update.message)
