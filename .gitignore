@@ -1,6 +1,7 @@
 settings.py
 *.log
 env/
+.vscode/
 __pycache__/
 city.csv
 downloads/
